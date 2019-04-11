@@ -1,0 +1,42 @@
+package_dependencies:
+  - meetup_pkg@1.0
+  - webhook@1.0
+  - script@1.0
+  - convert@1.0
+
+package_overrides:
+  meetup_pkg@1.0:
+    url: localhost:4000
+
+workflows:
+  meetup-slack:
+    steps:
+      - meetup_pkg:fetchMeetup@1.0:
+          debug: true
+          inputs:
+            Lon: "-122.680746&"
+            EndDate: "2019-04-29T22:00:00&"
+            TopicCategory: "tech,code,developer,coding,hack&"
+            Page: "1&"
+            Radius: "10&"
+            Lat: "45.531577"
+          outputs:
+            Events: upcomingEvents
+      - script:js@1.0:
+          inputs:
+            ScriptVars: {"multiplier": 32}
+            Script: "function callMethod(data) {\n var number = data * 1.5;
+            return number.toString();\n  \n}\nvar output = callMethod
+            (multiplier);\n  return output;\n"
+          outputs:
+            ReturnValue: outputString
+      - webhook:post@1.0:
+          debug: true
+          inputs:
+            Body: ${outputString}
+            Url: https://hooks.slack.com/services/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
+            ContentType: application/json
+          outputs:
+            Success: bool
+
+#  apptree workflow run -f workflow.yaml --id meetup-slack
